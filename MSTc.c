@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "cs4050.h"
 #include "MST.h"
 
@@ -151,7 +152,7 @@ int Find(UnionFind* uf, Vertex* v){
 
     if ( uf[v->number-1].parent == v->number-1) return v->number-1;
 
-    uf[v->number-1].parent = Find(uf, uf[v->number-1].parent);
+    uf[v->number-1].parent = Find(uf, uf[uf[v->number-1].parent].vertex);
     return uf[v->number-1].parent;
 
 }
