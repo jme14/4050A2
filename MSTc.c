@@ -135,7 +135,7 @@ void BuildAdjacency(Vertex vertices[], Edge edges[], int countVertices, int coun
 
 typedef struct _UnionFind{
     Vertex* vertex;
-    int parent;
+    int parentIndex;
     int size;
 } UnionFind;
 
@@ -143,7 +143,7 @@ void MakeSet(UnionFind* uf, Vertex* v){
     UnionFind* element = &uf[v->number-1];
     printf("Element points to %p\n", element);
     if ( element != 0 ) {
-        element->parent = v->number-1;
+        element->parentIndex = v->number-1;
         element->size = 1;
 	element->vertex = v;
     }
@@ -155,28 +155,28 @@ int Find(UnionFind* uf, Vertex* v){
 	int vIndex = (v->number)-1;
 	printf("Looking at vIndex of %d\n", vIndex);
 	
-    if ( uf[vIndex].parent == vIndex) return vIndex;
+    if ( uf[vIndex].parentIndex == vIndex) return vIndex;
 
-    uf[vIndex].parent = Find(uf, uf[uf[vIndex].parent].vertex);
-	printf("The parent of this is %d\n", uf[vIndex].parent);
-    return uf[vIndex].parent;
+    uf[vIndex].parentIndex = Find(uf, uf[uf[vIndex].parentIndex].vertex);
+	printf("The parent of this is %d\n", uf[vIndex].parentIndex + 1 );
+    return uf[vIndex].parentIndex;
 
 }
 
 void Union(UnionFind* uf, Vertex* u, Vertex* v){
-    int uParent = Find(uf, u);
-    int vParent = Find(uf, v);
+    int uParentIndex = Find(uf, u);
+    int vParentIndex = Find(uf, v);
 
-    if ( uParent == vParent ) return;
+    if ( uParentIndex == vParentIndex ) return;
 
-    int parent = uParent;
-    int nonParent = vParent;
-    if ( uf[uParent].size < uf[vParent].size){
-        parent = vParent;
-        nonParent = uParent;
+    int parent = uParentIndex;
+    int nonParent = vParentIndex;
+    if ( uf[uParentIndex].size < uf[vParentIndex].size){
+        parent = vParentIndex;
+        nonParent = uParentIndex;
     }
 
-    uf[nonParent].parent = parent;
+    uf[nonParent].parentIndex = parent;
     uf[parent].size += uf[nonParent].size;
 
 
@@ -258,10 +258,9 @@ void MST_Kruskal(Vertex vertices[], int countVertices, Edge edges[], int countEd
         Vertex* v = &vertices[ e.to-1 ];
 	
 
-	int findResultU = Find(ufArray,u);
-	int findResultV = Find(ufArray,v);
-	printf("uFind: %d | vFind: %d\n", findResultU, findResultV);
-        if ( Find(ufArray, u) != Find(ufArray, v)){
+	int uParentIndex = Find(ufArray,u);
+	int vParentIndex = Find(ufArray,v);
+        if ( uParentIndex == vParentIndex ) {
             Union(ufArray, u,v);
 	    printf("\t%d -> %d (%4f)\n", e.from, e.to, e.weight);
 	}
