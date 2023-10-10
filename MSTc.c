@@ -141,19 +141,25 @@ typedef struct _UnionFind{
 
 void MakeSet(UnionFind* uf, Vertex* v){
     UnionFind* element = &uf[v->number-1];
+    printf("Element points to %p\n", element);
     if ( element != 0 ) {
-        element->parent = v->number -1;
+        element->parent = v->number-1;
         element->size = 1;
+	element->vertex = v;
     }
 
 }
 
 int Find(UnionFind* uf, Vertex* v){
 
-    if ( uf[v->number-1].parent == v->number-1) return v->number-1;
+	int vIndex = (v->number)-1;
+	printf("Looking at vIndex of %d\n", vIndex);
+	
+    if ( uf[vIndex].parent == vIndex) return vIndex;
 
-    uf[v->number-1].parent = Find(uf, uf[uf[v->number-1].parent].vertex);
-    return uf[v->number-1].parent;
+    uf[vIndex].parent = Find(uf, uf[uf[vIndex].parent].vertex);
+	printf("The parent of this is %d\n", uf[vIndex].parent);
+    return uf[vIndex].parent;
 
 }
 
@@ -188,7 +194,8 @@ Edge* sortEdgesByWeight(Edge edges[], int countEdges){
     secondHalf = sortEdgesByWeight(firstHalf, countEdges/2);
 
     // merge 
-    Edge edgesSorted[countEdges];
+
+    Edge* edgesSorted = malloc(sizeof(Edge)*countEdges);
 
     int firstInc = 0;
     int secondInc = 0;
@@ -214,13 +221,12 @@ Edge* sortEdgesByWeight(Edge edges[], int countEdges){
         secondInc++;
     }
 
-    memcpy(edges,edgesSorted, sizeof(edgesSorted));
-    return edges;
+    return edgesSorted;
 }
 
 void MST_Kruskal(Vertex vertices[], int countVertices, Edge edges[], int countEdges)
 {
-
+	puts("MST:");
     // // make empty set A to hold edges 
 
     // for each vertex, 
@@ -245,14 +251,20 @@ void MST_Kruskal(Vertex vertices[], int countVertices, Edge edges[], int countEd
     //             print e to show addition into MST 
 
     for ( int i = 0 ; i < countEdges ; i++ ){
+
         Edge e = sortedEdges[i];
+
         Vertex* u = &vertices[ e.from-1 ];
         Vertex* v = &vertices[ e.to-1 ];
+	
 
+	int findResultU = Find(ufArray,u);
+	int findResultV = Find(ufArray,v);
+	printf("uFind: %d | vFind: %d\n", findResultU, findResultV);
         if ( Find(ufArray, u) != Find(ufArray, v)){
             Union(ufArray, u,v);
-            PrintVertex(*u);
-        }
+	    printf("\t%d -> %d (%4f)\n", e.from, e.to, e.weight);
+	}
     }
 
 
