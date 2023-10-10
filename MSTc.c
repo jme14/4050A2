@@ -132,8 +132,127 @@ void BuildAdjacency(Vertex vertices[], Edge edges[], int countVertices, int coun
     
 }
 
+typedef struct _UnionFind{
+    Vertex* vertex;
+    int parent;
+    int size;
+} UnionFind;
+
+void MakeSet(UnionFind* uf, Vertex* v){
+    UnionFind* element = &uf[v->number-1];
+    if ( element != 0 ) {
+        element->parent = v->number -1;
+        element->size = 1;
+    }
+
+}
+
+int Find(UnionFind* uf, Vertex* v){
+
+    if ( uf[v->number-1].parent == v->number-1) return v->number-1;
+
+    uf[v->number-1].parent = Find(uf, uf[v->number-1].parent);
+    return uf[v->number-1].parent;
+
+}
+
+void Union(UnionFind* uf, Vertex* u, Vertex* v){
+    int uParent = Find(uf, u);
+    int vParent = Find(uf, v);
+
+    if ( uParent == vParent ) return;
+
+    int parent = uParent;
+    int nonParent = vParent;
+    if ( uf[uParent].size < uf[vParent].size){
+        parent = vParent;
+        nonParent = uParent;
+    }
+
+    uf[nonParent].parent = parent;
+    uf[parent].size += uf[nonParent].size;
+
+
+}
+
+Edge* sortEdgesByWeight(Edge edges[], int countEdges){
+
+    // attempt mergesort 
+    if ( countEdges <= 1 ) return edges;
+
+    Edge* firstHalf = edges;
+    Edge* secondHalf = &(edges[(countEdges/2)+1]);
+
+    firstHalf = sortEdgesByWeight(firstHalf, countEdges/2 + countEdges%2);
+    secondHalf = sortEdgesByWeight(firstHalf, countEdges/2);
+
+    // merge 
+    Edge edgesSorted[countEdges];
+
+    int firstInc = 0;
+    int secondInc = 0;
+
+    int i = 0;
+    for (  ; i < countEdges && firstInc < countEdges/2 + countEdges%2 && secondInc < countEdges/2 ; i++ ){
+        if ( firstHalf[firstInc].weight <= secondHalf[secondInc].weight){
+            edgesSorted[i] = firstHalf[firstInc];
+            firstInc++;
+        } else {
+            edgesSorted[i] = secondHalf[secondInc];
+            secondInc++;
+        }
+    }
+
+    while ( firstInc < countEdges/2 + countEdges%2){
+        edgesSorted[i] = firstHalf[firstInc];
+        firstInc++;
+    }
+
+    while ( secondInc < countEdges/2){
+        edgesSorted[i] = secondHalf[secondInc];
+        secondInc++;
+    }
+
+    memcpy(edges,edgesSorted, sizeof(edgesSorted));
+    return edges;
+}
 
 void MST_Kruskal(Vertex vertices[], int countVertices, Edge edges[], int countEdges)
 {
-    puts("Entered Kruskal!!");
+
+    // // make empty set A to hold edges 
+
+    // for each vertex, 
+    //      make set containing just that single vertex 
+
+    UnionFind ufArray[countVertices];
+    memset(ufArray, 0, sizeof(UnionFind));
+
+    for ( int i = 0 ; i < countVertices ; i++ ){
+        MakeSet(ufArray, &vertices[i]);
+    }
+
+    // sort list of edges by weight
+    Edge* sortedEdges = sortEdgesByWeight(edges, countEdges);
+
+    // for each edge e in ascending order 
+    //      u = vert1 
+    //      v = vert2 
+    //      if ( vert1 not in same set as vert2 <union-find data structure> )
+    // //            add e to A 
+    //             UNION(u,v)
+    //             print e to show addition into MST 
+
+    for ( int i = 0 ; i < countEdges ; i++ ){
+        Edge e = sortedEdges[i];
+        Vertex* u = &vertices[ e.from-1 ];
+        Vertex* v = &vertices[ e.to-1 ];
+
+        if ( Find(ufArray, u) != Find(ufArray, v)){
+            Union(ufArray, u,v);
+            PrintVertex(*u);
+        }
+    }
+
+
 }
