@@ -225,8 +225,6 @@ Edge* sortEdgesByWeightHelper(Edge* edges, int countEdges){
     memcpy(edges, edgesSorted, sizeof(Edge)*countEdges);
     free(edgesSorted);
 
-
-
     return edges;
 }
 
@@ -258,8 +256,6 @@ void MST_Kruskal(Vertex vertices[], int countVertices, Edge edges[], int countEd
     Edge* sortedEdges = sortEdgesByWeight(edges, countEdges);
 
 
-
-
     // for each edge e in ascending order 
     //      u = vert1 
     //      v = vert2 
@@ -285,5 +281,6 @@ void MST_Kruskal(Vertex vertices[], int countVertices, Edge edges[], int countEd
 	}
     }
 
+    free(sortedEdges);
 
 }
