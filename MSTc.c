@@ -141,7 +141,6 @@ typedef struct _UnionFind{
 
 void MakeSet(UnionFind* uf, Vertex* v){
     UnionFind* element = &uf[v->number-1];
-    printf("Element points to %p\n", element);
     if ( element != 0 ) {
         element->parentIndex = v->number-1;
         element->size = 1;
@@ -153,12 +152,10 @@ void MakeSet(UnionFind* uf, Vertex* v){
 int Find(UnionFind* uf, Vertex* v){
 
 	int vIndex = (v->number)-1;
-	printf("Looking at vIndex of %d\n", vIndex);
 	
     if ( uf[vIndex].parentIndex == vIndex) return vIndex;
 
     uf[vIndex].parentIndex = Find(uf, uf[uf[vIndex].parentIndex].vertex);
-	printf("The parent of this is %d\n", uf[vIndex].parentIndex + 1 );
     return uf[vIndex].parentIndex;
 
 }
@@ -166,6 +163,7 @@ int Find(UnionFind* uf, Vertex* v){
 void Union(UnionFind* uf, Vertex* u, Vertex* v){
     int uParentIndex = Find(uf, u);
     int vParentIndex = Find(uf, v);
+
 
     if ( uParentIndex == vParentIndex ) return;
 
@@ -182,16 +180,16 @@ void Union(UnionFind* uf, Vertex* u, Vertex* v){
 
 }
 
-Edge* sortEdgesByWeight(Edge edges[], int countEdges){
+Edge* sortEdgesByWeightHelper(Edge* edges, int countEdges){
 
     // attempt mergesort 
     if ( countEdges <= 1 ) return edges;
 
     Edge* firstHalf = edges;
-    Edge* secondHalf = &(edges[(countEdges/2)+1]);
+    Edge* secondHalf = &(edges[(countEdges/2)+countEdges%2]);
 
-    firstHalf = sortEdgesByWeight(firstHalf, countEdges/2 + countEdges%2);
-    secondHalf = sortEdgesByWeight(firstHalf, countEdges/2);
+    firstHalf = sortEdgesByWeightHelper(firstHalf, countEdges/2 + countEdges%2);
+    secondHalf = sortEdgesByWeightHelper(secondHalf, countEdges/2);
 
     // merge 
 
@@ -200,29 +198,45 @@ Edge* sortEdgesByWeight(Edge edges[], int countEdges){
     int firstInc = 0;
     int secondInc = 0;
 
-    int i = 0;
-    for (  ; i < countEdges && firstInc < countEdges/2 + countEdges%2 && secondInc < countEdges/2 ; i++ ){
+
+    int inc = 0;
+    for (  ; inc < countEdges && firstInc < countEdges/2 + countEdges%2 && secondInc < countEdges/2 ; inc++ ){
         if ( firstHalf[firstInc].weight <= secondHalf[secondInc].weight){
-            edgesSorted[i] = firstHalf[firstInc];
+            edgesSorted[inc] = firstHalf[firstInc];
             firstInc++;
         } else {
-            edgesSorted[i] = secondHalf[secondInc];
+            edgesSorted[inc] = secondHalf[secondInc];
             secondInc++;
         }
     }
 
     while ( firstInc < countEdges/2 + countEdges%2){
-        edgesSorted[i] = firstHalf[firstInc];
+        edgesSorted[inc] = firstHalf[firstInc];
         firstInc++;
+	inc++;
     }
 
     while ( secondInc < countEdges/2){
-        edgesSorted[i] = secondHalf[secondInc];
+        edgesSorted[inc] = secondHalf[secondInc];
         secondInc++;
+	inc++;
     }
 
-    return edgesSorted;
+    memcpy(edges, edgesSorted, sizeof(Edge)*countEdges);
+    free(edgesSorted);
+
+
+
+    return edges;
 }
+
+Edge* sortEdgesByWeight(Edge edges[], int countEdges){
+	Edge* toSort = malloc(sizeof(Edge)*countEdges);
+	memcpy(toSort, edges, sizeof(Edge)*countEdges);
+
+	return sortEdgesByWeightHelper(toSort, countEdges);
+}
+
 
 void MST_Kruskal(Vertex vertices[], int countVertices, Edge edges[], int countEdges)
 {
@@ -239,8 +253,12 @@ void MST_Kruskal(Vertex vertices[], int countVertices, Edge edges[], int countEd
         MakeSet(ufArray, &vertices[i]);
     }
 
+
     // sort list of edges by weight
     Edge* sortedEdges = sortEdgesByWeight(edges, countEdges);
+
+
+
 
     // for each edge e in ascending order 
     //      u = vert1 
@@ -256,11 +274,12 @@ void MST_Kruskal(Vertex vertices[], int countVertices, Edge edges[], int countEd
 
         Vertex* u = &vertices[ e.from-1 ];
         Vertex* v = &vertices[ e.to-1 ];
-	
+
 
 	int uParentIndex = Find(ufArray,u);
 	int vParentIndex = Find(ufArray,v);
-        if ( uParentIndex == vParentIndex ) {
+
+        if ( uParentIndex != vParentIndex ) {
             Union(ufArray, u,v);
 	    printf("\t%d -> %d (%4f)\n", e.from, e.to, e.weight);
 	}
